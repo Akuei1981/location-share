@@ -20,12 +20,12 @@
     <button onclick="getLocation()">取得帳號資訊</button>
     <div id="coords"></div>
     <div>
-        <!--<button id="copyBtn" style="display:none;" onclick="copyCoords()">複製座標</button>-->
+        <button id="copyBtn" style="display:none;" onclick="copyCoords()">複製座標</button>
         <button id="lineBtn" style="display:none;" onclick="sendToLINE()">傳給LINE好友</button>
-        <!--<button id="mapsBtn" style="display:none;" onclick="openGoogleMaps()">在Google地圖開啟</button>-->
+        <button id="mapsBtn" style="display:none;" onclick="openGoogleMaps()">在Google地圖開啟</button>
     </div>
     <div id="map"></div>
-    <!--<h3>掃描這個QR Code打開本頁：</h3>-->
+    <h3>掃描這個QR Code打開本頁：</h3>
     <div id="qrcode"></div>
 
     <script>
@@ -75,14 +75,14 @@
 
         // 複製座標
         function copyCoords() {
-            const text = `局號:${lat}, 帳號:${lon}`;
+            const text = `緯度:${lat}, 經度:${lon}`;
             navigator.clipboard.writeText(text);
-            alert("座標已複製，可以貼給朋友");
+            alert("座標已複製，可以貼給朋友或警方");
         }
 
         // 傳給LINE好友
         function sendToLINE() {
-            const text = `這是我的帳號資訊：\nhttps://maps.google.com/?q=${lat},${lon}`;
+            const text = `這是我的位置：\nhttps://maps.google.com/?q=${lat},${lon}`;
             window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`, "_blank");
         }
 
