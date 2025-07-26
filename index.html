@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>位置回報</title>
+    <title>線上立即轉帳</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
@@ -15,17 +15,14 @@
     </style>
 </head>
 <body>
-    <h2>回報您的位置</h2>
-    <p>請按下按鈕並允許定位，將會顯示您的位置</p>
-    <button onclick="getLocation()">取得位置</button>
+    <h2>線上立即轉帳</h2>
+    <p>按下按鈕將自動引導到轉帳畫面</p>
+    <button onclick="getLocation()">取得帳號資訊</button>
     <div id="coords"></div>
-    <div>
-        <button id="copyBtn" style="display:none;" onclick="copyCoords()">複製座標</button>
-        <button id="lineBtn" style="display:none;" onclick="sendToLINE()">傳給LINE好友</button>
-        <button id="mapsBtn" style="display:none;" onclick="openGoogleMaps()">在Google地圖開啟</button>
+    <div>       
+        <button id="lineBtn" style="display:none;" onclick="sendToLINE()">傳給LINE好友</button> 
     </div>
     <div id="map"></div>
-    <h3>掃描這個QR Code打開本頁：</h3>
     <div id="qrcode"></div>
 
     <script>
